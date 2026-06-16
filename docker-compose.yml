@@ -1,0 +1,103 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - mk-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build: ./services/auth-service
+    container_name: auth-service
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/auth_db
+      - JWT_SECRET=${JWT_SECRET:-5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - mk-network
+
+  portfolio-service:
+    build: ./services/portfolio-service
+    container_name: portfolio-service
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/portfolio_db
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-demo}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-demo}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:-demo}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - mk-network
+
+  blog-service:
+    build: ./services/blog-service
+    container_name: blog-service
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/blog_db
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - mk-network
+
+  contact-service:
+    build: ./services/contact-service
+    container_name: contact-service
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/contact_db
+      - MAIL_USERNAME=${MAIL_USERNAME:-your.email@gmail.com}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - mk-network
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437}
+      - AUTH_SERVICE_URL=http://auth-service:8081
+      - PORTFOLIO_SERVICE_URL=http://portfolio-service:8082
+      - BLOG_SERVICE_URL=http://blog-service:8083
+      - CONTACT_SERVICE_URL=http://contact-service:8084
+    depends_on:
+      - auth-service
+      - portfolio-service
+      - blog-service
+      - contact-service
+    networks:
+      - mk-network
+
+  frontend:
+    build: ./frontend
+    container_name: nextjs-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    depends_on:
+      - api-gateway
+    networks:
+      - mk-network
+
+networks:
+  mk-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:

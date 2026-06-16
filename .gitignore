@@ -1,0 +1,29 @@
+# Env & secrets
+.env
+.env.local
+.env.*.local
+
+# Java / Maven
+target/
+*.jar
+*.war
+*.class
+
+# Node / Next.js
+node_modules/
+frontend/.next/
+frontend/out/
+npm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.qodo/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+mongodb_data/
