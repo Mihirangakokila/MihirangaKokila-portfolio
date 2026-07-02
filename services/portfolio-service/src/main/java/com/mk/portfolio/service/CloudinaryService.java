@@ -3,6 +3,7 @@ package com.mk.portfolio.service;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,6 +15,17 @@ import java.util.Map;
 public class CloudinaryService {
 
     private final Cloudinary cloudinary;
+
+    @Value("${cloudinary.cloud-name:demo}")
+    private String cloudName;
+
+    @Value("${cloudinary.api-key:demo}")
+    private String apiKey;
+
+    public boolean isConfigured() {
+        return cloudName != null && !cloudName.isBlank() && !"demo".equalsIgnoreCase(cloudName)
+                && apiKey != null && !apiKey.isBlank() && !"demo".equalsIgnoreCase(apiKey);
+    }
 
     public Map uploadMedia(MultipartFile file, String folder) throws IOException {
         String resourceType = file.getContentType() != null && file.getContentType().startsWith("video") 

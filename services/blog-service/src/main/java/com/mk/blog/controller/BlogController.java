@@ -23,6 +23,11 @@ public class BlogController {
         return ResponseEntity.ok(blogService.getAllPublishedPosts());
     }
 
+    @GetMapping("/manage")
+    public ResponseEntity<List<BlogResponse>> getAllPostsForAdmin() {
+        return ResponseEntity.ok(blogService.getAllPosts());
+    }
+
     @GetMapping("/{slug}")
     public ResponseEntity<BlogResponse> getPost(@PathVariable String slug) {
         return ResponseEntity.ok(blogService.getPostBySlug(slug));
@@ -36,6 +41,13 @@ public class BlogController {
     @PostMapping
     public ResponseEntity<BlogResponse> createPost(@RequestBody @Valid BlogRequest request) {
         return new ResponseEntity<>(blogService.createPost(request), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<BlogResponse> updatePost(
+            @PathVariable String id,
+            @RequestBody @Valid BlogRequest request) {
+        return ResponseEntity.ok(blogService.updatePost(id, request));
     }
 
     @DeleteMapping("/{id}")

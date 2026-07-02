@@ -17,7 +17,7 @@ spring:
         - id: portfolio-public-service
           uri: ${PORTFOLIO_SERVICE_URL:http://portfolio-service:8082}
           predicates:
-            - Path=/api/portfolio/type/**, /api/portfolio/category/**
+            - Path=/api/portfolio/type/**, /api/portfolio/category/**, /api/portfolio/media/**
             - Method=GET
 
         # Portfolio Admin Routes (Protected)
@@ -26,6 +26,15 @@ spring:
           predicates:
             - Path=/api/portfolio/**
             - Method=POST,PUT,DELETE
+          filters:
+            - JwtAuthentication
+
+        # Blog Admin Manage Route (Protected — must be before public GET)
+        - id: blog-admin-manage
+          uri: ${BLOG_SERVICE_URL:http://blog-service:8083}
+          predicates:
+            - Path=/api/blog/manage
+            - Method=GET
           filters:
             - JwtAuthentication
 
@@ -41,7 +50,7 @@ spring:
           uri: ${BLOG_SERVICE_URL:http://blog-service:8083}
           predicates:
             - Path=/api/blog/**
-            - Method=POST,DELETE
+            - Method=POST,PUT,DELETE
           filters:
             - JwtAuthentication
 

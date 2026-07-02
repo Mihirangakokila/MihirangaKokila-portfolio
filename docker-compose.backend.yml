@@ -34,9 +34,13 @@ services:
     restart: unless-stopped
     environment:
       - SPRING_DATA_MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017}/portfolio_db
-      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
-      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
-      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-demo}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-demo}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:-demo}
+      - MEDIA_PUBLIC_BASE_URL=${MEDIA_PUBLIC_BASE_URL:-http://localhost:8080}
+      - MEDIA_STORAGE_PATH=/app/uploads
+    volumes:
+      - portfolio_uploads:/app/uploads
     depends_on:
       mongodb:
         condition: service_healthy
@@ -93,3 +97,4 @@ networks:
 
 volumes:
   mongodb_data:
+  portfolio_uploads:

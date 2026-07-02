@@ -23,4 +23,5 @@ public class ProjectRequest {
     private List<String> tags;
     private String githubLink;
     private String demoLink;
+    private String mediaUrl;
 }

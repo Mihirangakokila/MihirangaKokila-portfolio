@@ -114,12 +114,17 @@ Test: `curl https://api.example.com/api/blog` should return `[]`.
 
 **2. New Project** → Import your `mihiranga-portfolio` repo.
 
-**3. Configure:**
+**3. Configure (important):**
+
+Click **Edit** next to **Root Directory** and select the `frontend` folder.
+
+> If you skip this, Vercel looks at the repo root, won't find Next.js, and shows:
+> *"No Next.js version detected"*
 
 | Setting | Value |
 |---------|-------|
-| Root Directory | `frontend` |
-| Framework | Next.js (auto-detected) |
+| Root Directory | **`frontend`** ← required |
+| Framework | Next.js (auto-detected after root is set) |
 
 **4. Environment variables** (add before deploy):
 
@@ -231,6 +236,7 @@ Your site is now on the public internet. Next steps for Google:
 
 | Problem | Fix |
 |---------|-----|
+| **No Next.js version detected** | Set **Root Directory** to `frontend` (see below) |
 | CORS errors in browser | Add your exact frontend URL to `CORS_ALLOWED_ORIGINS` and restart `api-gateway` |
 | API returns connection refused | Check `docker compose ps`, ensure port 8080 is open on VPS firewall |
 | Vercel build fails | Ensure Root Directory is set to `frontend` |

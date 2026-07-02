@@ -34,6 +34,10 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-demo}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-demo}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:-demo}
+      - MEDIA_PUBLIC_BASE_URL=http://localhost:8080
+      - MEDIA_STORAGE_PATH=/app/uploads
+    volumes:
+      - portfolio_uploads:/app/uploads
     depends_on:
       mongodb:
         condition: service_healthy
@@ -84,12 +88,17 @@ services:
       - mk-network
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8080
+        NEXT_PUBLIC_SITE_URL: http://localhost:3000
     container_name: nextjs-frontend
     ports:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_SITE_URL=http://localhost:3000
     depends_on:
       - api-gateway
     networks:
@@ -101,3 +110,4 @@ networks:
 
 volumes:
   mongodb_data:
+  portfolio_uploads:

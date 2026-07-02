@@ -8,6 +8,7 @@ import com.mk.portfolio.model.ProjectType;
 import com.mk.portfolio.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -22,24 +23,18 @@ public class ProjectService {
 
     private final ProjectRepository repository;
     private final CloudinaryService cloudinaryService;
+    private final LocalMediaStorageService localMediaStorageService;
 
     public ProjectResponse saveProject(ProjectRequest request, MultipartFile mediaFile) throws IOException {
-        String mediaUrl = null;
-        String publicId = null;
-
-        if (mediaFile != null && !mediaFile.isEmpty()) {
-            Map<?, ?> uploadResult = cloudinaryService.uploadMedia(mediaFile, request.getType().name().toLowerCase());
-            mediaUrl = (String) uploadResult.get("secure_url");
-            publicId = (String) uploadResult.get("public_id");
-        }
+        MediaResolution media = resolveMedia(request, mediaFile);
 
         Project project = Project.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .type(request.getType())
                 .category(request.getCategory())
-                .mediaUrl(mediaUrl)
-                .cloudinaryPublicId(publicId)
+                .mediaUrl(media.url())
+                .cloudinaryPublicId(media.storageKey())
                 .tags(request.getTags())
                 .githubLink(request.getGithubLink())
                 .demoLink(request.getDemoLink())
@@ -54,13 +49,11 @@ public class ProjectService {
         Project project = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
 
-        if (mediaFile != null && !mediaFile.isEmpty()) {
-            if (project.getCloudinaryPublicId() != null) {
-                cloudinaryService.deleteMedia(project.getCloudinaryPublicId(), project.getType().name());
-            }
-            Map<?, ?> uploadResult = cloudinaryService.uploadMedia(mediaFile, request.getType().name().toLowerCase());
-            project.setMediaUrl((String) uploadResult.get("secure_url"));
-            project.setCloudinaryPublicId((String) uploadResult.get("public_id"));
+        MediaResolution media = resolveMedia(request, mediaFile);
+        if (media.changed()) {
+            deleteStoredMedia(project.getCloudinaryPublicId(), project.getType());
+            project.setMediaUrl(media.url());
+            project.setCloudinaryPublicId(media.storageKey());
         }
 
         project.setTitle(request.getTitle());
@@ -91,10 +84,42 @@ public class ProjectService {
         Project project = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
 
-        if (project.getCloudinaryPublicId() != null) {
-            cloudinaryService.deleteMedia(project.getCloudinaryPublicId(), project.getType().name());
-        }
+        deleteStoredMedia(project.getCloudinaryPublicId(), project.getType());
         repository.delete(project);
+    }
+
+    private MediaResolution resolveMedia(ProjectRequest request, MultipartFile mediaFile) throws IOException {
+        if (mediaFile != null && !mediaFile.isEmpty()) {
+            if (cloudinaryService.isConfigured()) {
+                Map<?, ?> uploadResult = cloudinaryService.uploadMedia(
+                        mediaFile, request.getType().name().toLowerCase());
+                return new MediaResolution(
+                        (String) uploadResult.get("secure_url"),
+                        (String) uploadResult.get("public_id"),
+                        true
+                );
+            }
+
+            LocalMediaStorageService.StoredMedia stored = localMediaStorageService.store(mediaFile);
+            return new MediaResolution(stored.url(), stored.storageKey(), true);
+        }
+
+        if (StringUtils.hasText(request.getMediaUrl())) {
+            return new MediaResolution(request.getMediaUrl().trim(), null, true);
+        }
+
+        return new MediaResolution(null, null, false);
+    }
+
+    private void deleteStoredMedia(String storageKey, ProjectType type) throws IOException {
+        if (storageKey == null) {
+            return;
+        }
+        if (storageKey.startsWith(LocalMediaStorageService.STORAGE_KEY_PREFIX)) {
+            localMediaStorageService.delete(storageKey);
+        } else if (cloudinaryService.isConfigured()) {
+            cloudinaryService.deleteMedia(storageKey, type.name());
+        }
     }
 
     private ProjectResponse mapToResponse(Project project) {
@@ -111,4 +136,6 @@ public class ProjectService {
                 .createdAt(project.getCreatedAt())
                 .build();
     }
+
+    private record MediaResolution(String url, String storageKey, boolean changed) {}
 }

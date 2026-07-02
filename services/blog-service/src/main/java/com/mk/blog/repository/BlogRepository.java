@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface BlogRepository extends MongoRepository<BlogPost, String> {
     Optional<BlogPost> findBySlug(String slug);
     List<BlogPost> findByIsPublishedTrueOrderByCreatedAtDesc();
+    List<BlogPost> findAllByOrderByCreatedAtDesc();
     List<BlogPost> findByCategoryAndIsPublishedTrue(String category);
     List<BlogPost> findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(String titleQuery, String contentQuery);
 }

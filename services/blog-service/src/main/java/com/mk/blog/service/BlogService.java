@@ -45,6 +45,12 @@ public class BlogService {
                 .toList();
     }
 
+    public List<BlogResponse> getAllPosts() {
+        return repository.findAllByOrderByCreatedAtDesc().stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
     /**
      * Retrieves a single blog post by its unique SEO slug.
      */

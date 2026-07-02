@@ -16,3 +16,8 @@ cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME:demo}
   api-key: ${CLOUDINARY_API_KEY:demo}
   api-secret: ${CLOUDINARY_API_SECRET:demo}
+
+media:
+  storage:
+    path: ${MEDIA_STORAGE_PATH:/app/uploads}
+  public-base-url: ${MEDIA_PUBLIC_BASE_URL:http://localhost:8080}
